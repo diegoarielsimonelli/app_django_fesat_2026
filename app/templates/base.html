@@ -1,0 +1,89 @@
+<!doctype html>
+
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{% block titulo %} {% endblock titulo %}</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}" />
+  </head>
+  <body class="container-box">
+  <nav style="display: flex; justify-content: space-between; align-items: center; padding: 10px 20px; background-color: #f8f9fa; border-bottom: 1px solid #e3e6f0; margin-bottom: 20px;">
+    <!-- Enlaces de navegación -->
+    <div>
+        <a href="{% url 'home' %}" style="margin-right: 15px; text-decoration: none; color: #333;">Inicio</a>
+        <a href="{% url 'profesores' %}" style="margin-right: 15px; text-decoration: none; color: #333;">Profesores</a>
+        <a href="{% url 'cursos' %}" style="margin-right: 15px; text-decoration: none; color: #333;">Cursos</a>
+        <a href="{% url 'estudiantes' %}" style="margin-right: 15px; text-decoration: none; color: #333;">Estudiantes</a>
+        <a href="{% url 'entregables' %}" style="margin-right: 15px; text-decoration: none; color: #333;">Entregables</a>
+    </div>
+    
+    <!-- Bloque dinámico de Autenticación -->
+   <div style="display: flex; align-items: center; gap: 12px;">
+    {% if user.is_authenticated %}
+        <!-- CASO: USUARIO LOGUEADO -->
+        <div style="display: flex; align-items: center; gap: 8px;">
+            <!-- 1. FOTO DE PERFIL / AVATAR -->
+            {% if user.avatar and user.avatar.imagen %}
+                <img src="{{ user.avatar.imagen.url }}" alt="Avatar" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover; border: 1px solid #d1d3e2;">
+            {% else %}
+                <!-- Silueta por defecto en caso de no tener foto cargada -->
+                <span style="font-size: 20px; line-height: 1;">👤</span>
+            {% endif %}
+
+            <!-- 2. NOMBRE DE USUARIO -->
+            <span style="color: #4e73df; font-weight: bold; font-size: 14px;">{{ user.username }}</span>
+        </div>
+        
+        <!-- 3. ENLACE PEQUEÑO PARA CAMBIAR FOTO -->
+        <a href="{% url 'agregar_avatar' %}" style="text-decoration: none; font-size: 11px; color: #858796; white-space: nowrap; margin-left: 4px;">📷 Cambiar foto</a>
+        
+        <!-- 4. FORMULARIO SEGURO DE LOGOUT ALINEADO -->
+        <form action="{% url 'logout' %}" method="POST" style="margin: 0; display: flex; align-items: center;">
+            {% csrf_token %}
+            <button type="submit" style="background-color: #e74c3c; color: white; border: none; padding: 6px 12px; cursor: pointer; font-weight: bold; border-radius: 4px; font-size: 13px; white-space: nowrap;">
+                🚪 Cerrar Sesión
+            </button>
+        </form>
+
+    {% else %}
+        <!-- CASO: VISITANTE ANÓNIMO -->
+        <a href="{% url 'login' %}" style="background-color: #2ecc71; color: white; text-decoration: none; padding: 6px 12px; font-weight: bold; border-radius: 4px; font-size: 13px;">
+            🔑 Iniciar Sesión
+        </a>
+        <a href="{% url 'registro' %}" style="background-color: #3498db; color: white; text-decoration: none; padding: 6px 12px; font-weight: bold; border-radius: 4px; font-size: 13px;">
+            📝 Crear Cuenta
+        </a>
+    {% endif %}
+</div>
+</nav>
+
+    {% block body %}
+
+    <h1>{{titulo}}</h1>
+    <p>{{mensaje}}</p>
+    <ul>
+      {% for producto in productos%} {% if producto.precio < 50 %}
+      <li>
+        <span style="color: red"
+          >Id: {{producto.id}} - Nombre: {{producto.nombre}} - Precio:
+          ${{producto.precio}}</span
+        >
+      </li>
+
+      {%endif%} {% comment %}
+      <li>
+        <span
+          >Id: {{producto.id}} - Nombre: {{producto.nombre}} - Precio:
+          ${{producto.precio}}</span
+        >
+      </li>
+      {% endcomment %} {%empty%}
+      <span>No hay productos disponibles</span>
+
+      {%endfor%}
+    </ul>
+    {% endblock body %}
+  </body>
+</html>

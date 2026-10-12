@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block titulo %}Eliminar Profesores {% endblock titulo %}
+
+{% block body %}
+<div class="container-box">
+    <h2>¿Estás seguro de que quieres eliminar el profesor?</h2>
+    <p>Esta acción no se puede deshacer. Estás por borrar: <strong>(Nombre: {{ object.nombre }}) (Apellido: {{ object.apellido }})</strong></p>
+    
+    <form method="POST">
+        {% csrf_token %}
+        <button type="submit" style="background-color: #e74c3c; margin-bottom: 10px;">Sí, Confirmar Eliminación</button>
+    </form>
+    
+    <a href="{% url 'profesores' %}" class="btn-link">Cancelar y Volver</a>
+</div>
+{% endblock body  %}
+

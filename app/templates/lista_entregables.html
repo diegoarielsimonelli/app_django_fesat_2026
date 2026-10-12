@@ -1,0 +1,51 @@
+{% extends "base.html" %} 
+
+{% block titulo %}Listado de Entregables{% endblock titulo %} 
+
+{% block body %}
+<div class="container-box">
+  <h2>Listar Entregables</h2>
+  <ul>
+    {% for entregable in entregables %}
+    <li
+      style="
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+      "
+    >
+      <div>
+        <span>📂 <strong>{{ entregable.nombre }}</strong></span> —
+        <span>📅 Fecha de entrega: {{ entregable.fecha_de_entrega|date:"d/m/Y" }}</span> —
+        
+        <!-- Indicador visual dinámico según el estado del booleano -->
+        {% if entregable.entregado %}
+          <span style="color: #2ecc71; font-weight: bold;">✔️ Entregado</span>
+        {% else %}
+          <span style="color: #e74c3c; font-weight: bold;">❌ Pendiente</span>
+        {% endif %}
+      </div>
+      
+      <!-- Bloque de acciones del CRUD con rutas específicas para Entregables -->
+      <div style="display: flex; gap: 10px">
+        <a
+          href="{% url 'editar_entregable' entregable.id %}"
+          style="color: #f39c12; text-decoration: none; font-weight: bold"
+          >✏️ Editar</a
+        >
+        <a
+          href="{% url 'borrar_entregable' entregable.id %}"
+          style="color: #e74c3c; text-decoration: none; font-weight: bold"
+          >❌ Borrar</a
+        >
+      </div>
+    </li>
+    {% empty %}
+    <li>No hay entregables disponibles actualmente.</li>
+    {% endfor %}
+  </ul>
+  
+  <a href="{% url 'crear_entregable' %}" class="btn-link">➕ Agregar un nuevo entregable</a>
+</div>
+{% endblock body %}

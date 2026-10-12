@@ -1,0 +1,41 @@
+{% extends "base.html" %} {% block titulo %}Listado de Cursos{% endblock titulo%} {% block body %}
+<div class="container-box">
+  <h2>Listar Profesores</h2>
+  <ul>
+    {% for curso in profesores %}
+    <li
+      style="
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+      "
+    >
+      <div>
+        <span>📖 {{ curso.nombre }}</span> —
+        <strong>{{ curso.apellido }}</strong>
+         <span>📖 {{ curso.email }}</span> —
+        <strong> {{ curso.profesion }}</strong>
+       
+      </div>
+      <!-- Bloque de acciones del CRUD -->
+      <div style="display: flex; gap: 10px">
+        <a
+          href="{% url 'editar_profesor' curso.id %}"
+          style="color: #f39c12; text-decoration: none; font-weight: bold"
+          >✏️ Editar</a
+        >
+        <a
+          href="{% url 'borrar_profesor' curso.id %}"
+          style="color: #e74c3c; text-decoration: none; font-weight: bold"
+          >❌ Borrar</a
+        >
+      </div>
+    </li>
+    {% empty %}
+    <li>No hay profesores disponibles actualmente.</li>
+    {% endfor %}
+  </ul>
+  <a href="{% url 'crear_profesor' %}" class="btn-link">➕ Agregar un nuevo profesor</a>
+</div>
+{% endblock body %}

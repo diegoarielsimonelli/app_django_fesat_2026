@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block body %}
+<div class="container-box" style="max-width: 400px; margin: 0 auto; padding: 20px;">
+    <h2>Cambiar Foto de Perfil</h2>
+    
+    <!-- CORREGIDO: enctype="multipart/form-data" es el valor real y obligatorio -->
+    <form method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" style="background-color: #3498db; color: white; padding: 10px; border: none; cursor: pointer; font-weight: bold; width: 100%; border-radius: 4px; margin-top: 10px;">
+            💾 Guardar Imagen
+        </button>
+    </form>
+</div>
+{% endblock body %}

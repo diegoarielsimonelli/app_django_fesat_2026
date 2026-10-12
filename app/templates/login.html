@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block titulo %}Iniciar Sesión{% endblock titulo %}
+
+{% block body %}
+<div class="container-box" style="max-width: 400px; margin: 0 auto; padding: 20px;">
+    <h2>Iniciar Sesión</h2>
+    
+    <form method="POST">
+        {% csrf_token %}
+        
+        <!-- Mostrar errores generales de autenticación (ej: credenciales incorrectas) -->
+        {% if form.non_field_errors %}
+            <div style="color: #e74c3c; margin-bottom: 15px; font-weight: bold;">
+                {{ form.non_field_errors }}
+            </div>
+        {% endif %}
+        
+        <!-- Renderizado de los campos del formulario -->
+        {{ form.as_p }}
+        
+        <button type="submit" style="background-color: #2ecc71; color: white; width: 100%; padding: 10px; border: none; font-weight: bold; cursor: pointer; margin-top: 10px;">
+            🔑 Ingresar
+        </button>
+    </form>
+</div>
+{% endblock body %}

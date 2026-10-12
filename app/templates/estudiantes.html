@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block titulo %}Agregar Nuevo Estudiante{% endblock titulo %}
+
+{% block body %}
+<div class="container-box">
+    <h2>Agregar Estudiante Nuevo</h2>
+    <form method="POST">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Guardar Estudiante</button>
+    </form>
+    <a href="{% url 'estudiantes' %}" class="btn-link">⬅ Volver al listado</a>
+</div>
+{% endblock body %}

@@ -1,0 +1,38 @@
+{% extends "base.html" %} {% block titulo %}Listado de Cursos{% endblock titulo%} {% block body %}
+<div class="container-box">
+  <h2>Listar Cursos</h2>
+  <ul>
+    {% for curso in cursos %}
+    <li
+      style="
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+      "
+    >
+      <div>
+        <span>📖 {{ curso.nombre }}</span> —
+        <strong>Camada: {{ curso.camada }}</strong>
+      </div>
+      <!-- Bloque de acciones del CRUD -->
+      <div style="display: flex; gap: 10px">
+        <a
+          href="{% url 'editar_curso' curso.id %}"
+          style="color: #f39c12; text-decoration: none; font-weight: bold"
+          >✏️ Editar</a
+        >
+        <a
+          href="{% url 'borrar_curso' curso.id %}"
+          style="color: #e74c3c; text-decoration: none; font-weight: bold"
+          >❌ Borrar</a
+        >
+      </div>
+    </li>
+    {% empty %}
+    <li>No hay cursos disponibles actualmente.</li>
+    {% endfor %}
+  </ul>
+  <a href="{% url 'crear_curso' %}" class="btn-link">➕ Crear un nuevo curso</a>
+</div>
+{% endblock body %}

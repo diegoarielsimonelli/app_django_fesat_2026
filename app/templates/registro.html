@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block titulo %}Registrarse{% endblock titulo %}
+
+{% block body %}
+<div class="container-box" style="max-width: 400px; margin: 0 auto; padding: 20px;">
+    <h2>Crear una nueva Cuenta</h2>
+    
+    <form method="POST">
+        {% csrf_token %}
+        
+        {% if form.errors %}
+            <div style="color: #e74c3c; margin-bottom: 15px; font-weight: bold;">
+                Por favor, corrige los errores señalados abajo.
+            </div>
+        {% endif %}
+        
+        {{ form.as_p }}
+        
+        <button type="submit" style="background-color: #3498db; color: white; width: 100%; padding: 10px; border: none; font-weight: bold; cursor: pointer; margin-top: 10px; border-radius: 4px;">
+            📝 Registrarse y Guardar
+        </button>
+    </form>
+</div>
+{% endblock body %}

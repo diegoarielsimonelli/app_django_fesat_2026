@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block titulo %}Agregar Nuevo Entregable{% endblock titulo %}
+
+{% block body %}
+<div class="container-box">
+    <h2>Agregar Entregable Nuevo</h2>
+    <form method="POST">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Guardar Entregable</button>
+    </form>
+    <a href="{% url 'entregables' %}" class="btn-link">⬅ Volver al listado</a>
+</div>
+{% endblock body %}

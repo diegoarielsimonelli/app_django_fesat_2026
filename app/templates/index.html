@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block titulo %}
+{{titulo}}
+{% endblock titulo %}
+{% block body %}
+
+ <div class="container-box">
+    <h1>{{titulo}}</h1>
+    <p>{{mensaje}}</p>
+    <ul>
+      {% for producto in productos%} {% if producto.precio < 50 %}
+      <li>
+        <span style="color: red"
+          >Id: {{producto.id}} - Nombre: {{producto.nombre}} - Precio:
+          ${{producto.precio}}</span
+        >
+      </li>
+
+      {%endif%} {% comment %}
+      <li>
+        <span
+          >Id: {{producto.id}} - Nombre: {{producto.nombre}} - Precio:
+          ${{producto.precio}}</span
+        >
+      </li>
+      {% endcomment %} {%empty%}
+      <span>No hay productos disponibles</span>
+
+      {%endfor%}
+    </ul>
+ </div>
+
+{% endblock body %}
+
