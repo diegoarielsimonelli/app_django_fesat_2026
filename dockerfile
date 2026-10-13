@@ -19,8 +19,10 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 
 # 3. Copiar el resto del código y terminar la instalación del proyecto
 COPY . .
+# Cambiá la línea 23 para que quede así:
 RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --frozen --no-dev
+    uv sync --frozen --no-dev --no-install-project
+
 
 
 # --- ETAPA DE PRODUCCIÓN ---
