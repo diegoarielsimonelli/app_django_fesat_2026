@@ -1,3 +1,28 @@
+# --- ETAPA 1: COMPILACIÓN (BUILDER) ---
+FROM python:3.12-slim-bookworm AS builder
+
+# Instalar uv copiando los binarios directamente de la imagen oficial
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+
+WORKDIR /app
+
+# Variables de entorno para optimizar la compilación de uv
+ENV UV_COMPILE_BYTECODE=1 \
+    UV_LINK_MODE=copy
+
+# 1. Copiar archivos de dependencias para aprovechar la caché de Docker
+COPY pyproject.toml uv.lock ./
+
+# 2. Instalar dependencias externas (sin exigir el paquete raíz todavía)
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --frozen --no-dev --no-install-project
+
+# 3. Copiar todo el código para terminar la instalación
+COPY . .
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --frozen --no-dev --no-install-project
+
+
 # --- ETAPA 2: PRODUCCIÓN ---
 FROM python:3.12-slim-bookworm
 
