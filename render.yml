@@ -1,0 +1,20 @@
+databases:
+  - name: mysitedb
+    plan: free
+    databaseName: djangodb
+    user: djangouser
+
+services:
+  - type: web
+    plan: free
+    name: django-app
+    runtime: docker # <-- Cambiado de python a docker
+    # Nota: buildCommand y startCommand ya no son necesarios aquí 
+    # porque se definen automáticamente dentro de tu Dockerfile
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: mysitedb
+          property: connectionString
+      - key: DEBUG
+        value: "False"
