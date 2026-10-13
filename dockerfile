@@ -34,21 +34,23 @@ COPY --from=builder /app/.venv /app/.venv
 # Copiamos TODOS los archivos directamente a /app
 COPY . .
 
-# Variables de entorno esenciales
+# Variables de entorno esenciales (se fuerza la inclusión de /app en las búsquedas de Python)
 ENV PATH="/app/.venv/bin:$PATH" \
     PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONPATH="/app"
+    PYTHONPATH="/app:/app/.venv/lib/python3.12/site-packages"
 
-# COMANDO DINÁMICO: Busca dónde quedó manage.py y ejecuta collectstatic desde ahí
+# COMANDO DINÁMICO: Encuentra manage.py, configura el PYTHONPATH local y ejecuta collectstatic
 RUN MANAGE_PATH=$(find . -name "manage.py" | head -n 1) && \
-    if [ -z "$MANAGE_PATH" ]; then echo "ERROR: No se encontró manage.py en ningún lado"; exit 1; fi && \
+    if [ -z "$MANAGE_PATH" ]; then echo "ERROR: No se encontró manage.py"; exit 1; fi && \
     cd $(dirname "$MANAGE_PATH") && \
+    export PYTHONPATH="/app:$(pwd):$PYTHONPATH" && \
     python manage.py collectstatic --no-input
 
 EXPOSE 10000
 
-# Iniciamos Gunicorn buscando automáticamente la carpeta raíz del proyecto Django
+# Iniciamos Gunicorn configurando de igual manera las rutas en tiempo de ejecución
 CMD MANAGE_PATH=$(find . -name "manage.py" | head -n 1) && \
     cd $(dirname "$MANAGE_PATH") && \
-    exec gunicorn --chdir . proyecto_1.wsgi:application --bind 0.0.0.0:10000
+    export PYTHONPATH="/app:$(pwd):$PYTHONPATH" && \
+    exec gunicorn proyecto_1.wsgi:application --bind 0.0.0.0:10000
