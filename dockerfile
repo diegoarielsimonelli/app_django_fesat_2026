@@ -9,6 +9,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certifi
 # Descargar e instalar uv usando el script oficial de Astral (URL corregida)
 RUN curl -LsSf https://astral.sh | sh
 
+
 # Asegurar que el binario de uv esté disponible en el PATH para el builder
 ENV PATH="/root/.local/bin:$PATH"
 ENV UV_COMPILE_BYTECODE=1
