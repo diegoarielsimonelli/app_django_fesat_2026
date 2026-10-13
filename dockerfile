@@ -1,58 +1,19 @@
-# --- ETAPA 1: COMPILACIÓN (BUILDER) ---
-FROM python:3.12-slim-bookworm AS builder
-
-# Instalar uv copiando los binarios directamente de la imagen oficial
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
-
-WORKDIR /app
-
-# Variables de entorno para optimizar la compilación de uv
-ENV UV_COMPILE_BYTECODE=1 \
-    UV_LINK_MODE=copy
-
-# 1. Copiar archivos de dependencias para aprovechar la caché de Docker
-COPY pyproject.toml uv.lock ./
-
-# 2. Instalar dependencias externas (Evita que uv busque el __init__.py del proyecto)
-RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --frozen --no-dev --no-install-project
-
-# 3. Copiar todo el código fuente
-COPY . .
-
-# 4. Sincronizar asegurando que no intente instalar el paquete raíz como editable
-RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --frozen --no-dev --no-install-project
-
-
-# --- ETAPA 2: PRODUCCIÓN ---
 FROM python:3.12-slim-bookworm
 
 WORKDIR /app
 
-# Copiamos el entorno virtual compilado desde el builder
-COPY --from=builder /app/.venv /app/.venv
+# Instalar curl para el script de construcción
+RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates && rm -rf /var/lib/apt/lists/*
 
-# Copiamos TODOS los archivos directamente a /app
 COPY . .
 
-# Variables de entorno esenciales para asegurar las rutas de ejecución
-ENV PATH="/app/.venv/bin:$PATH" \
-    PYTHONUNBUFFERED=1 \
-    PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONPATH="/app:/app/.venv/lib/python3.12/site-packages"
-
-# COMANDO DINÁMICO: Encuentra manage.py, configura el PYTHONPATH local y ejecuta collectstatic
-RUN MANAGE_PATH=$(find . -name "manage.py" | head -n 1) && \
-    if [ -z "$MANAGE_PATH" ]; then echo "ERROR: No se encontró manage.py"; exit 1; fi && \
-    cd $(dirname "$MANAGE_PATH") && \
-    export PYTHONPATH="/app:$(pwd):$PYTHONPATH" && \
-    python manage.py collectstatic --no-input
+# Ejecutar el script de construcción dentro del contenedor
+RUN chmod +x build.sh && ./build.sh
 
 EXPOSE 10000
 
-# Iniciamos Gunicorn configurando de igual manera las rutas en tiempo de ejecución
+# Arrancar el servidor buscando dinámicamente tu módulo de Django
 CMD MANAGE_PATH=$(find . -name "manage.py" | head -n 1) && \
     cd $(dirname "$MANAGE_PATH") && \
-    export PYTHONPATH="/app:$(pwd):$PYTHONPATH" && \
+    source ../../.venv/bin/activate && \
     exec gunicorn proyecto_1.wsgi:application --bind 0.0.0.0:10000
