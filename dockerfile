@@ -1,5 +1,8 @@
 # --- ETAPA DE COMPILACIÓN ---
-FROM astralsh/uv:python3.12-bookworm-slim AS builder
+FROM python:3.12-slim-bookworm AS builder
+
+# Instalar uv directamente usando el instalador oficial de Astral
+COPY --from=astralsh/uv:latest /uv /uvx /bin/
 
 WORKDIR /app
 ENV UV_COMPILE_BYTECODE=1
@@ -8,11 +11,11 @@ ENV UV_COMPILE_BYTECODE=1
 COPY pyproject.toml uv.lock ./
 
 # 2. Instalar dependencias externas (sin tu código todavía)
-RUN uv sync --frozen --no-dev --no-install-project
+RUN /bin/uv sync --frozen --no-dev --no-install-project
 
 # 3. Copiar el resto del código para que uv pueda instalar tu proyecto correctamente
 COPY . .
-RUN uv sync --frozen --no-dev
+RUN /bin/uv sync --frozen --no-dev
 
 
 # --- ETAPA DE PRODUCCIÓN ---
