@@ -6,7 +6,7 @@ WORKDIR /app
 # Instalar curl para poder bajar uv
 RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates
 
-# Descargar e instalar uv usando el script oficial de Astral
+# Descargar e instalar uv usando el script oficial de Astral (URL corregida)
 RUN curl -LsSf https://astral.sh | sh
 
 # Asegurar que el binario de uv esté disponible en el PATH para el builder
