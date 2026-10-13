@@ -2,6 +2,7 @@
 name = "proyecto-django-enclase"
 version = "0.1.0"
 description = "Add your description here"
+project-type = "app"
 readme = "README.md"
 authors = [
     { name = "Diego Simonelli", email = "simonellidiego@gmail.com" }
