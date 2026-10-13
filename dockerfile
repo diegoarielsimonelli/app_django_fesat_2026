@@ -1,21 +1,27 @@
 # --- ETAPA DE COMPILACIÓN ---
 FROM python:3.12-slim-bookworm AS builder
 
-# Instalar uv directamente usando el instalador oficial de Astral
-COPY --from=astralsh/uv:latest /uv /uvx /bin/
-
 WORKDIR /app
+
+# Instalar curl para poder bajar uv
+RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates
+
+# Descargar e instalar uv usando el script oficial de Astral
+RUN curl -LsSf https://astral.sh | sh
+
+# Asegurar que el binario de uv esté disponible en el PATH para el builder
+ENV PATH="/root/.local/bin:$PATH"
 ENV UV_COMPILE_BYTECODE=1
 
-# 1. Copiar primero las dependencias para aprovechar la caché de Docker
+# 1. Copiar primero las dependencias para aprovechar la cache de Docker
 COPY pyproject.toml uv.lock ./
 
 # 2. Instalar dependencias externas (sin tu código todavía)
-RUN /bin/uv sync --frozen --no-dev --no-install-project
+RUN uv sync --frozen --no-dev --no-install-project
 
 # 3. Copiar el resto del código para que uv pueda instalar tu proyecto correctamente
 COPY . .
-RUN /bin/uv sync --frozen --no-dev
+RUN uv sync --frozen --no-dev
 
 
 # --- ETAPA DE PRODUCCIÓN ---
@@ -33,7 +39,7 @@ COPY . .
 ENV PATH="/app/.venv/bin:$PATH" \
     PYTHONUNBUFFERED=1
 
-# Ahora collectstatic funcionará porque Python sí detectará tu app y configuraciones
+# Ejecutar collectstatic
 RUN python manage.py collectstatic --no-input
 
 EXPOSE 10000
