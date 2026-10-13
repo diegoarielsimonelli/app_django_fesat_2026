@@ -1,26 +1,25 @@
 # --- ETAPA 1: COMPILACIÓN (BUILDER) ---
 FROM python:3.12-slim-bookworm AS builder
 
-# Instalar uv copiando los binarios directamente de la imagen oficial
+# Instalar uv copiando los binarios de la imagen oficial (GHCR)
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
 WORKDIR /app
 
-# Variables de entorno para optimizar la compilación de uv
 ENV UV_COMPILE_BYTECODE=1 \
     UV_LINK_MODE=copy
 
 # 1. Copiar archivos de dependencias para aprovechar la caché de Docker
 COPY pyproject.toml uv.lock ./
 
-# 2. Instalar dependencias externas
+# 2. Instalar dependencias externas iniciales
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --frozen --no-dev --no-install-project
 
-# 3. Copiar todo el código para terminar la instalación
+# 3. Copiar todo el código y HACER LA SINCRONIZACIÓN FINAL (Sin la bandera)
 COPY . .
 RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --frozen --no-dev --no-install-project
+    uv sync --frozen --no-dev
 
 
 # --- ETAPA 2: PRODUCCIÓN ---
@@ -28,29 +27,25 @@ FROM python:3.12-slim-bookworm
 
 WORKDIR /app
 
-# Copiamos el entorno virtual compilado desde el builder
+# Copiamos el entorno virtual compilado correctamente en la etapa anterior
 COPY --from=builder /app/.venv /app/.venv
 
-# Copiamos TODOS los archivos directamente a /app
+# Copiamos todo el código fuente del proyecto
 COPY . .
 
-# Variables de entorno esenciales (se fuerza la inclusión de /app en las búsquedas de Python)
+# Forzamos a que el sistema use el entorno virtual donde está instalado Django
 ENV PATH="/app/.venv/bin:$PATH" \
     PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONPATH="/app:/app/.venv/lib/python3.12/site-packages"
+    PYTHONPATH="/app/src/proyecto_django_enclase"
 
-# COMANDO DINÁMICO: Encuentra manage.py, configura el PYTHONPATH local y ejecuta collectstatic
-RUN MANAGE_PATH=$(find . -name "manage.py" | head -n 1) && \
-    if [ -z "$MANAGE_PATH" ]; then echo "ERROR: No se encontró manage.py"; exit 1; fi && \
-    cd $(dirname "$MANAGE_PATH") && \
-    export PYTHONPATH="/app:$(pwd):$PYTHONPATH" && \
-    python manage.py collectstatic --no-input
+# Nos paramos de forma exacta en la carpeta donde está tu archivo manage.py
+WORKDIR /app/src/proyecto_django_enclase
+
+# Ahora sí ejecutará collectstatic porque Django estará disponible en el entorno virtual
+RUN python manage.py collectstatic --no-input
 
 EXPOSE 10000
 
-# Iniciamos Gunicorn configurando de igual manera las rutas en tiempo de ejecución
-CMD MANAGE_PATH=$(find . -name "manage.py" | head -n 1) && \
-    cd $(dirname "$MANAGE_PATH") && \
-    export PYTHONPATH="/app:$(pwd):$PYTHONPATH" && \
-    exec gunicorn proyecto_1.wsgi:application --bind 0.0.0.0:10000
+# Iniciamos el servidor con Gunicorn
+CMD ["gunicorn", "proyecto_1.wsgi:application", "--bind", "0.0.0.0:10000"]
