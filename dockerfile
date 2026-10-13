@@ -1,50 +1,53 @@
-# --- ETAPA DE COMPILACIÓN ---
+# --- ETAPA 1: COMPILACIÓN (BUILDER) ---
 FROM python:3.12-slim-bookworm AS builder
+
+# Instalar uv copiando los binarios directamente de la imagen oficial
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
 WORKDIR /app
 
-# Instalar curl para poder bajar uv
-RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates
+# Variables de entorno para optimizar la compilación de uv
+ENV UV_COMPILE_BYTECODE=1 \
+    UV_LINK_MODE=copy
 
-# Descargar e instalar uv usando el script oficial de Astral
-RUN curl -LsSf https://astral.sh | sh
-
-# Asegurar que el binario de uv esté disponible en el PATH para el builder
-ENV PATH="/root/.local/bin:$PATH"
-ENV UV_COMPILE_BYTECODE=1
-
-# 1. Copiar primero las dependencias para aprovechar la cache de Docker
+# 1. Copiar archivos de dependencias para aprovechar la caché de Docker
 COPY pyproject.toml uv.lock ./
 
-# 2. Instalar dependencias externas (sin tu código todavía)
-RUN uv sync --frozen --no-dev --no-install-project
+# 2. Instalar dependencias externas (con la bandera para no exigir el paquete raíz todavía)
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --frozen --no-dev --no-install-project
 
-# 3. Copiar el resto del código
+# 3. Copiar todo el código para terminar la instalación
 COPY . .
-RUN uv sync --frozen --no-dev
+
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --frozen --no-dev --no-install-project
 
 
-# --- ETAPA DE PRODUCCIÓN ---
+# --- ETAPA 2: PRODUCCIÓN ---
 FROM python:3.12-slim-bookworm
 
 WORKDIR /app
 
-# Copiamos el entorno virtual generado
+# Copiamos el entorno virtual que se armó en la Etapa 1 (builder)
 COPY --from=builder /app/.venv /app/.venv
+
+# Copiamos todo el código fuente de tu proyecto
 COPY . .
 
-# Variables de entorno esenciales
+# Variables de entorno esenciales para que Python encuentre Django y el entorno virtual
 ENV PATH="/app/.venv/bin:$PATH" \
-    PYTHONUNBUFFERED=1
+    PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONPATH="/app/src/proyecto_django_enclase"
 
-# === CORRECCIÓN AQUÍ ===
-# Nos movemos a la subcarpeta exacta donde está tu archivo manage.py
+# Nos movemos a la subcarpeta interna donde está tu archivo manage.py
 WORKDIR /app/src/proyecto_django_enclase
 
-# Ahora sí encontrará manage.py para compilar los estáticos
+# Ejecutamos collectstatic de Django
 RUN python manage.py collectstatic --no-input
 
 EXPOSE 10000
 
-# Aseguramos que Gunicorn arranque desde la carpeta correcta buscando tu módulo proyecto_1
+# Iniciamos el servidor con Gunicorn apuntando a tu módulo de producción
 CMD ["gunicorn", "proyecto_1.wsgi:application", "--bind", "0.0.0.0:10000"]
