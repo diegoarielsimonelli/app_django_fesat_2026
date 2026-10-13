@@ -1,28 +1,26 @@
 # --- ETAPA DE COMPILACIÓN ---
 FROM python:3.12-slim-bookworm AS builder
 
+# Instalar uv copiando los binarios directamente de la imagen oficial
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+
 WORKDIR /app
 
-# Instalar curl para poder bajar uv
-RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates
+# Variables de entorno para optimizar la compilación de uv
+ENV UV_COMPILE_BYTECODE=1 \
+    UV_LINK_MODE=copy
 
-# Descargar e instalar uv usando el script oficial de Astral (URL corregida)
-RUN curl -LsSf https://astral.sh | sh
-
-
-# Asegurar que el binario de uv esté disponible en el PATH para el builder
-ENV PATH="/root/.local/bin:$PATH"
-ENV UV_COMPILE_BYTECODE=1
-
-# 1. Copiar primero las dependencias para aprovechar la cache de Docker
+# 1. Copiar archivos de dependencias para aprovechar la caché de Docker
 COPY pyproject.toml uv.lock ./
 
 # 2. Instalar dependencias externas (sin tu código todavía)
-RUN uv sync --frozen --no-dev --no-install-project
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --frozen --no-dev --no-install-project
 
-# 3. Copiar el resto del código para que uv pueda instalar tu proyecto correctamente
+# 3. Copiar el resto del código y terminar la instalación del proyecto
 COPY . .
-RUN uv sync --frozen --no-dev
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --frozen --no-dev
 
 
 # --- ETAPA DE PRODUCCIÓN ---
@@ -30,17 +28,18 @@ FROM python:3.12-slim-bookworm
 
 WORKDIR /app
 
-# Copiamos el entorno virtual con todo instalado (incluyendo tu proyecto)
+# Copiamos el entorno virtual compilado desde la etapa anterior
 COPY --from=builder /app/.venv /app/.venv
 
-# Copiamos el código fuente limpio para producción
+# Copiamos el código fuente limpio necesario para producción
 COPY . .
 
 # Variables de entorno esenciales para Python y Render
 ENV PATH="/app/.venv/bin:$PATH" \
-    PYTHONUNBUFFERED=1
+    PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1
 
-# Ejecutar collectstatic
+# Ejecutar el collectstatic de Django usando las dependencias del entorno virtual
 RUN python manage.py collectstatic --no-input
 
 EXPOSE 10000
